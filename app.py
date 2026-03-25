@@ -653,60 +653,107 @@ with tabs[2]:
 # ════════════════════════════════════════════
 with tabs[3]:
     st.markdown("### 🔍 Analyse par sous-groupes (Heterogeneous Treatment Effects)")
-    
-    segment_cols = []
-    if 'device' in df_filtered.columns: segment_cols.append('device')
-    if 'country' in df_filtered.columns: segment_cols.append('country')
-    if 'age_group' in df_filtered.columns: segment_cols.append('age_group')
-    
-    if segment_cols:
-        selected_seg = st.selectbox("Segmenter par :", segment_cols, 
-                                     format_func=lambda x: {'device': '📱 Device', 'country': '🌍 Pays', 'age_group': '👤 Âge'}.get(x, x))
-        
+
+    # Colonnes candidates : on cherche toutes les colonnes catégorielles
+    # sauf les colonnes de base du test et les colonnes numériques
+    EXCLUDE_COLS = {'user_id', 'timestamp', 'date', 'hour', 'week',
+                    'group', 'converted', 'revenue', 'time_on_page', 'clicks'}
+    LABEL_MAP = {
+        'device': '📱 Device',
+        'country': '🌍 Pays',
+        'age_group': '👤 Tranche d\'âge',
+        'landing_page': '📄 Landing page',
+        'browser': '🌐 Navigateur',
+        'os': '💻 OS',
+    }
+
+    # On utilise df (le dataset complet, pas df_filtered) pour la segmentation
+    # afin qu'un filtre sidebar actif ne vide pas les segments
+    segment_cols = [
+        c for c in df.columns
+        if c not in EXCLUDE_COLS
+        and df[c].dtype == object
+        and df[c].nunique() >= 2
+        and df[c].nunique() <= 20
+    ]
+
+    if not segment_cols:
+        st.markdown("""
+        <div class="warning-box">
+            ⚠️ <strong>Aucune colonne de segmentation disponible</strong><br>
+            Le dataset chargé ne contient pas de variables catégorielles (device, pays, âge…) 
+            permettant une analyse par sous-groupe.<br><br>
+            Si vous utilisez le dataset Kaggle, il ne contient que <code>group</code>, 
+            <code>landing_page</code> et <code>converted</code>. 
+            Téléchargez le dataset enrichi ou utilisez le dataset synthétique auto-généré 
+            (supprimez <code>ab_data.csv</code> pour le régénérer).
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        selected_seg = st.selectbox(
+            "Segmenter par :",
+            segment_cols,
+            format_func=lambda x: LABEL_MAP.get(x, x.replace('_', ' ').title())
+        )
+
         seg_results = []
-        for seg_val in df_filtered[selected_seg].unique():
-            seg_df = df_filtered[df_filtered[selected_seg] == seg_val]
+        for seg_val in sorted(df[selected_seg].unique()):
+            seg_df = df[df[selected_seg] == seg_val]
             seg_ctrl = seg_df[seg_df['group'] == 'control']
-            seg_trt = seg_df[seg_df['group'] == 'treatment']
-            
-            if len(seg_ctrl) > 30 and len(seg_trt) > 30:
-                seg_conv_ctrl = seg_ctrl['converted'].mean()
-                seg_conv_trt = seg_trt['converted'].mean()
-                seg_lift = (seg_conv_trt - seg_conv_ctrl) / seg_conv_ctrl * 100 if seg_conv_ctrl > 0 else 0
-                
-                ct = pd.crosstab(seg_df['group'], seg_df['converted'])
-                if ct.shape == (2, 2):
-                    _, p_val, _, _ = chi2_contingency(ct)
-                else:
-                    p_val = 1.0
-                
-                seg_results.append({
-                    'Segment': seg_val,
-                    'N Contrôle': len(seg_ctrl),
-                    'N Traitement': len(seg_trt),
-                    'Conv. Contrôle': f"{seg_conv_ctrl*100:.2f}%",
-                    'Conv. Traitement': f"{seg_conv_trt*100:.2f}%",
-                    'Lift': f"{seg_lift:+.2f}%",
-                    'p-value': f"{p_val:.4f}",
-                    'Significatif': '✅' if p_val < alpha else '❌',
-                    '_lift_val': seg_lift,
-                    '_p_val': p_val
-                })
-        
-        if seg_results:
+            seg_trt  = seg_df[seg_df['group'] == 'treatment']
+
+            if len(seg_ctrl) < 30 or len(seg_trt) < 30:
+                continue  # pas assez de données pour ce segment
+
+            seg_conv_ctrl = seg_ctrl['converted'].mean()
+            seg_conv_trt  = seg_trt['converted'].mean()
+            seg_lift = (seg_conv_trt - seg_conv_ctrl) / seg_conv_ctrl * 100 if seg_conv_ctrl > 0 else 0
+
+            ct = pd.crosstab(seg_df['group'], seg_df['converted'])
+            if ct.shape == (2, 2):
+                _, p_val, _, _ = chi2_contingency(ct)
+            else:
+                p_val = 1.0
+
+            seg_results.append({
+                'Segment':           seg_val,
+                'N Contrôle':        len(seg_ctrl),
+                'N Traitement':      len(seg_trt),
+                'Conv. Contrôle':    f"{seg_conv_ctrl*100:.2f}%",
+                'Conv. Traitement':  f"{seg_conv_trt*100:.2f}%",
+                'Lift':              f"{seg_lift:+.2f}%",
+                'p-value':           f"{p_val:.4f}",
+                'Significatif':      '✅' if p_val < alpha else '❌',
+                '_lift_val':         seg_lift,
+                '_p_val':            p_val,
+            })
+
+        if not seg_results:
+            st.markdown("""
+            <div class="warning-box">
+                ⚠️ <strong>Données insuffisantes</strong><br>
+                Aucun segment ne contient au moins 30 utilisateurs par groupe 
+                pour ce critère de segmentation. Essayez un autre critère ou 
+                désactivez les filtres du panneau latéral.
+            </div>
+            """, unsafe_allow_html=True)
+        else:
             seg_df_result = pd.DataFrame(seg_results)
-            
-            # Graphique comparatif
-            fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+            # ── Graphiques ──────────────────────────────────────
+            fig, axes = plt.subplots(1, 2, figsize=(12, max(3, len(seg_results) * 0.7 + 1)))
             fig.patch.set_facecolor('#0d0f14')
-            
-            segments = seg_df_result['Segment'].tolist()
-            lifts = seg_df_result['_lift_val'].tolist()
+
+            segments   = seg_df_result['Segment'].tolist()
+            lifts      = seg_df_result['_lift_val'].tolist()
+            p_vals     = seg_df_result['_p_val'].tolist()
             colors_lift = ['#00d4aa' if l > 0 else '#e74c3c' for l in lifts]
-            
+            colors_p    = ['#00d4aa' if p < alpha else '#f39c12' for p in p_vals]
+
+            # Lift
             ax = axes[0]
             ax.set_facecolor('#1a1d26')
-            bars = ax.barh(segments, lifts, color=colors_lift, zorder=3)
+            ax.barh(segments, lifts, color=colors_lift, zorder=3)
             ax.axvline(0, color='#8b90a8', linewidth=1, linestyle='--')
             ax.set_xlabel('Lift (%)', color='#8b90a8')
             ax.set_title(f'Lift par {selected_seg}', color='#e8eaf0', fontfamily='monospace')
@@ -716,12 +763,10 @@ with tabs[3]:
             ax.spines['right'].set_visible(False)
             ax.xaxis.grid(True, color='#2a2d3e', linestyle='--', alpha=0.5, zorder=0)
             ax.set_axisbelow(True)
-            
+
             # P-values
             ax2 = axes[1]
             ax2.set_facecolor('#1a1d26')
-            p_vals = seg_df_result['_p_val'].tolist()
-            colors_p = ['#00d4aa' if p < alpha else '#f39c12' for p in p_vals]
             ax2.barh(segments, p_vals, color=colors_p, zorder=3)
             ax2.axvline(alpha, color='#e74c3c', linewidth=2, linestyle='--', label=f'α={alpha}')
             ax2.set_xlabel('p-value', color='#8b90a8')
@@ -733,12 +778,12 @@ with tabs[3]:
             ax2.legend(facecolor='#2a2d3e', edgecolor='none', labelcolor='#e8eaf0')
             ax2.xaxis.grid(True, color='#2a2d3e', linestyle='--', alpha=0.5, zorder=0)
             ax2.set_axisbelow(True)
-            
+
             plt.tight_layout()
             st.pyplot(fig)
             plt.close()
-            
-            # Table des résultats
+
+            # ── Tableau ──────────────────────────────────────────
             display_df = seg_df_result.drop(columns=['_lift_val', '_p_val'])
             st.dataframe(display_df.set_index('Segment'), use_container_width=True)
 
@@ -794,28 +839,34 @@ with tabs[4]:
         rec_color = "#00d4aa"
         rec_icon = "✅"
         rationale = f"""
-        - Le test est **statistiquement significatif** (p={p_chi2:.4f} < α={alpha})
-        - La Version B génère un **lift de +{lift:.2f}%** sur le taux de conversion
-        - L'intervalle de confiance à {int((1-alpha)*100)}% exclut 0 : [{ci_low:.4f}, {ci_high:.4f}]
-        - Impact business estimé : **€{monthly_revenue_delta:+,.0f}/mois** de revenus additionnels
+        <ul style="margin:0; padding-left:20px;">
+            <li>Le test est <strong>statistiquement significatif</strong> (p={p_chi2:.4f} &lt; α={alpha})</li>
+            <li>La Version B génère un <strong>lift de +{lift:.2f}%</strong> sur le taux de conversion</li>
+            <li>L'intervalle de confiance à {int((1-alpha)*100)}% exclut 0 : [{ci_low:.4f}, {ci_high:.4f}]</li>
+            <li>Impact business estimé : <strong>€{monthly_revenue_delta:+,.0f}/mois</strong> de revenus additionnels</li>
+        </ul>
         """
     elif is_significant and lift < 0:
         recommendation = "CONSERVER la Version A (Contrôle)"
         rec_color = "#e74c3c"
         rec_icon = "🔴"
         rationale = f"""
-        - Le test est **statistiquement significatif** (p={p_chi2:.4f} < α={alpha})
-        - La Version B est **moins performante** avec un lift de {lift:.2f}%
-        - Conserver la Version A et explorer de nouvelles hypothèses
+        <ul style="margin:0; padding-left:20px;">
+            <li>Le test est <strong>statistiquement significatif</strong> (p={p_chi2:.4f} &lt; α={alpha})</li>
+            <li>La Version B est <strong>moins performante</strong> avec un lift de {lift:.2f}%</li>
+            <li>Conserver la Version A et explorer de nouvelles hypothèses</li>
+        </ul>
         """
     else:
         recommendation = "CONTINUER le test — résultat non concluant"
         rec_color = "#f39c12"
         rec_icon = "⚠️"
         rationale = f"""
-        - Le test **n'est pas encore statistiquement significatif** (p={p_chi2:.4f} > α={alpha})
-        - Il est possible que la différence observée soit due au hasard
-        - Recommandation : collecter davantage de données ou revoir le design de l'expérience
+        <ul style="margin:0; padding-left:20px;">
+            <li>Le test <strong>n'est pas encore statistiquement significatif</strong> (p={p_chi2:.4f} &gt; α={alpha})</li>
+            <li>Il est possible que la différence observée soit due au hasard</li>
+            <li>Recommandation : collecter davantage de données ou revoir le design de l'expérience</li>
+        </ul>
         """
     
     st.markdown(f"""
