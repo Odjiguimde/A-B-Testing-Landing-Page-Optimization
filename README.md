@@ -1,8 +1,6 @@
 # 🧪 A/B Testing — Landing Page Optimization
 
 Expérimentation contrôlée pour comparer deux versions d'une landing page.  
-**Projet 2 — Data Science**
-
 ---
 
 ## 🚀 Démo en ligne
