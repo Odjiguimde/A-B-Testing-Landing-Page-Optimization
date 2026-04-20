@@ -5,7 +5,7 @@ Expérimentation contrôlée pour comparer deux versions d'une landing page.
 
 ##  Démo en ligne
 
-> Déployez sur [share.streamlit.io](https://share.streamlit.io) (cf. section déploiement)
+> Déployez sur [share.streamlit.io](https://rtr2eednbjtntbyv6uzxze.streamlit.app/) (cf. section déploiement)
 
 ---
 
