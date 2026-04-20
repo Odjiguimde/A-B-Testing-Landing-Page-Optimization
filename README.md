@@ -1,25 +1,25 @@
-# 🧪 A/B Testing — Landing Page Optimization
+#  A/B Testing — Landing Page Optimization
 
 Expérimentation contrôlée pour comparer deux versions d'une landing page.  
 ---
 
-## 🚀 Démo en ligne
+##  Démo en ligne
 
 > Déployez sur [share.streamlit.io](https://share.streamlit.io) (cf. section déploiement)
 
 ---
 
-## 📂 Structure du projet
+##  Structure du projet
 
 ```
 ab_testing/
 │
-├── 📓 EDA_AB_Testing.ipynb          # Notebook — analyse complète pas à pas
-├── 🐍 app.py                         # Application Streamlit interactive
-├── 🐍 generate_notebook.py           # Script pour générer le notebook
-├── 📊 ab_data.csv                    # Dataset (auto-généré ou Kaggle)
-├── 📋 requirements.txt
-├── 📖 README.md
+├──  EDA_AB_Testing.ipynb          # Notebook — analyse complète pas à pas
+├──  app.py                         # Application Streamlit interactive
+├──  generate_notebook.py           # Script pour générer le notebook
+├──  ab_data.csv                    # Dataset (auto-généré ou Kaggle)
+├──  requirements.txt
+├──  README.md
 ├── plots/
 │   ├── 01_ab_overview.png
 │   ├── 02_segment_analysis.png
@@ -30,7 +30,7 @@ ab_testing/
 
 ---
 
-## 📓 Notebook — EDA_AB_Testing.ipynb
+##  Notebook — EDA_AB_Testing.ipynb
 
 | Section | Contenu |
 |---|---|
@@ -49,21 +49,21 @@ jupyter notebook EDA_AB_Testing.ipynb
 
 ---
 
-## 🖥️ Application Streamlit
+##  Application Streamlit
 
 Dashboard interactif avec filtres dynamiques (device, pays, âge) et 5 onglets :
 
 | Onglet | Contenu |
 |---|---|
-| 📊 Vue d'ensemble | Métriques clés, taux de conversion, tableau récapitulatif |
-| 🔬 Tests statistiques | Chi², Z-test, t-test, table de contingence |
-| 📈 Visualisations | Distributions, bootstrap, évolution temporelle |
-| 🔍 Analyse segmentée | Lift et p-value par sous-groupe |
-| 💡 Décision | Impact business, recommandation, exports |
+|  Vue d'ensemble | Métriques clés, taux de conversion, tableau récapitulatif |
+|  Tests statistiques | Chi², Z-test, t-test, table de contingence |
+|  Visualisations | Distributions, bootstrap, évolution temporelle |
+|  Analyse segmentée | Lift et p-value par sous-groupe |
+|  Décision | Impact business, recommandation, exports |
 
 ---
 
-## 📦 Dataset
+##  Dataset
 
 ### Option A — Dataset Kaggle (recommandé)
 Source : [Kaggle — A/B Testing](https://www.kaggle.com/datasets/zhangluyuan/ab-testing)
@@ -86,7 +86,7 @@ Si `ab_data.csv` est absent, un dataset réaliste est généré automatiquement 
 
 ---
 
-## 🛠 Installation locale
+##  Installation locale
 
 ```bash
 # 1. Cloner le dépôt
@@ -109,7 +109,7 @@ L'application s'ouvre sur : `http://localhost:8501`
 
 ---
 
-## ☁️ Déploiement sur Streamlit Cloud
+##  Déploiement sur Streamlit Cloud
 
 ```bash
 # Étape 1 — Pousser sur GitHub
@@ -125,13 +125,13 @@ git push -u origin main
 1. Se connecter avec GitHub
 2. "New app" → sélectionner le dépôt
 3. Fichier principal : `app.py`
-4. Deploy ✅
+4. Deploy 
 
-> ⚠️ Inclure `ab_data.csv` dans le dépôt GitHub pour Streamlit Cloud.
+>  Inclure `ab_data.csv` dans le dépôt GitHub pour Streamlit Cloud.
 
 ---
 
-## 🧰 Technologies utilisées
+##  Technologies utilisées
 
 | Outil | Usage |
 |---|---|
@@ -144,7 +144,7 @@ git push -u origin main
 
 ---
 
-## 🔬 Méthodologie statistique
+##  Méthodologie statistique
 
 ### Hypothèses
 - **H₀** : Pas de différence entre les taux de conversion (p_A = p_B)
@@ -161,7 +161,7 @@ git push -u origin main
 
 ---
 
-## 📊 Variables créées (Feature Engineering)
+##  Variables créées (Feature Engineering)
 
 | Variable | Description |
 |---|---|
@@ -171,7 +171,7 @@ git push -u origin main
 
 ---
 
-## 🤝 Liens avec le Projet 1 (EDA Marketing)
+##  Liens avec le Projet 1 (EDA Marketing)
 
 Ce projet s'inscrit dans la continuité du Projet 1 :
 - **Projet 1** : EDA exploratoire → identification des segments à fort potentiel
@@ -180,6 +180,6 @@ Ce projet s'inscrit dans la continuité du Projet 1 :
 
 ---
 
-## 📄 Licence
+##  Licence
 
 MIT — Libre d'utilisation pour tout projet éducatif ou professionnel.
