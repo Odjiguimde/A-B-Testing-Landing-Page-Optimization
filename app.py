@@ -21,9 +21,9 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600&display=swap');
-
-    html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    html, body {
+      font-family: 'Inter', sans-serif;}
     h1, h2, h3 { font-family: 'Space Mono', monospace; }
 
     .stApp { background-color: #0d0f14; color: #e8eaf0; }
