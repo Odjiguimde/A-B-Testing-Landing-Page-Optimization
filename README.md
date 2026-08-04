@@ -1,4 +1,4 @@
-#  A/B Testing — Landing Page Optimization
+# Projet DS : 2_A/B Testing — Landing Page Optimization
 
 Expérimentation contrôlée pour comparer deux versions d'une landing page.  
 ---
